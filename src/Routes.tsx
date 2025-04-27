@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import AOS from 'aos';
-import { Home } from './pages';
+import { Home, Login, Register } from './pages';
 import { Layout } from './components';
 
 function Routes() {
@@ -15,6 +15,14 @@ function Routes() {
     }, []);
 
     const router = createBrowserRouter([
+        {
+            path: '/cadastro',
+            element: <Register />
+        },
+        {
+            path: '/login',
+            element: <Login />
+        },
         {
             path: '/',
             element: <Layout />,
