@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Dialog, DialogPanel } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { logoBlack } from '../assets'
-import { href, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 
 const navigation = [
     { name: 'Quiz', href: 'quiz' },
@@ -12,7 +12,7 @@ const navigation = [
 
 function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
+    const [isHovered, setIsHovered] = useState(false);
     const navigate = useNavigate();
 
     return (
@@ -21,7 +21,11 @@ function Header() {
                 <div className="flex flex-1">
                     <div className="hidden lg:flex lg:gap-x-12">
                         {navigation.map((item) => (
-                            <span key={item.name} onClick={() => navigate(`/${item.href}`)} className="text-sm/2 cursor-pointer font-semibold transition text-gray-900 hover:scale-120" >
+                            <span
+                                key={item.name}
+                                onClick={() => navigate(`/${item.href}`)}
+                                className="text-sm/2 cursor-pointer font-semibold transition text-gray-900 hover:text-yellow-500"
+                            >
                                 {item.name}
                             </span>
                         ))}
@@ -43,13 +47,24 @@ function Header() {
                         alt="logo-furia"
                         onClick={() => navigate("/")}
                         src={logoBlack}
-                        className="h-12 w-auto transition hover:scale-120 hover:rotate-6"
+                        className="h-12 w-auto transition hover:scale-105"
                     />
                 </div>
-                <div className="flex flex-1 justify-end">
-                    <a href="/login" className="text-sm/6 font-semibold text-gray-900">
-                        Entrar <span aria-hidden="true">&rarr;</span>
-                    </a>
+                <div className="hidden lg:flex flex-1 justify-end">
+                    <button
+                        onClick={() => navigate("/login")}
+                        onMouseEnter={() => setIsHovered(true)}
+                        onMouseLeave={() => setIsHovered(false)}
+                        className="group relative flex items-center justify-center overflow-hidden rounded-md bg-yellow-500 p-3 min-w-40 shadow-sm transition-all hover:bg-yellow-400 hover:shadow-md"
+                    >
+                        <span className="relative text-md font-semibold">
+                            Entrar
+                            <span
+                                className={`absolute left-0 block h-0.5 bg-gray-900 transition-all duration-300 ${isHovered ? 'w-full' : 'w-0'}`}
+                                style={{ bottom: '-2px' }}
+                            />
+                        </span>
+                    </button>
                 </div>
             </nav>
             <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
@@ -76,21 +91,33 @@ function Header() {
                             />
                         </div>
                         <div className="flex flex-1 justify-end">
-                            <a href="/login" className="text-sm/6 font-semibold text-gray-900">
-                                Entrar <span aria-hidden="true">&rarr;</span>
-                            </a>
+                            {/* Espaço vazio para manter o alinhamento */}
                         </div>
                     </div>
-                    <div className="mt-6 space-y-2">
+                    <div className="mt-6 space-y-4">
                         {navigation.map((item) => (
                             <span
                                 key={item.name}
-                                onClick={() => navigate(`/${item.href}`)}
-                                className="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
+                                onClick={() => {
+                                    navigate(`/${item.href}`);
+                                    setMobileMenuOpen(false);
+                                }}
+                                className="-mx-3 block rounded-lg px-3 py-3 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
                             >
                                 {item.name}
                             </span>
                         ))}
+                        <button
+                            onClick={() => {
+                                navigate("/login");
+                                setMobileMenuOpen(false);
+                            }}
+                            className="-mx-3 w-58 rounded-lg bg-yellow-500 px-3 py-3 text-base/7 font-semibold text-gray-900 text-center hover:bg-yellow-400"
+                        >
+                            <span className='text-md font-semibold'>
+                                Entrar
+                            </span>
+                        </button>
                     </div>
                 </DialogPanel>
             </Dialog>

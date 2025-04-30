@@ -1,0 +1,24 @@
+import RestApi, { IResponse } from "../../ApiBase";
+import { ICompleteUserDTO, IUpdateUserDTO, IUser } from "./IUsers.interface";
+
+export default class UsersRequest {
+    // Buscar dados do usuário autenticado
+    public static getLoggedUser(): Promise<IResponse<IUser>> {
+        return RestApi.httpGet("/users");
+    }
+
+    // Completar cadastro do usuário temporário
+    public static completeRegistration(data: ICompleteUserDTO): Promise<IResponse<IUser>> {
+        return RestApi.httpPost("/users/complete-registration", data);
+    }
+
+    // Atualizar usuário autenticado
+    public static updateUser(data: IUpdateUserDTO): Promise<IResponse<IUser>> {
+        return RestApi.httpPut("/users", data);
+    }
+
+    // Deletar conta do usuário autenticado
+    public static deleteUser(): Promise<IResponse<IUser>> {
+        return RestApi.httpDelete("/users");
+    }
+}

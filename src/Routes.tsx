@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import AOS from 'aos';
 import { Home, Login, Register } from './pages';
-import { Layout } from './components';
+import { AuthCallback, Layout } from './components';
 
 function Routes() {
 
@@ -22,6 +22,10 @@ function Routes() {
         {
             path: '/login',
             element: <Login />
+        },
+        {
+            path: '/auth/callback',
+            element: <AuthCallback />
         },
         {
             path: '/',
