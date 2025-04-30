@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import AOS from 'aos';
-import { Home, Login, Register } from './pages';
+import { Home, Login, Profile, Register } from './pages';
 import { AuthCallback, Layout } from './components';
 
 function Routes() {
@@ -34,6 +34,10 @@ function Routes() {
                 {
                     path: '/',
                     element: <Home />,
+                },
+                {
+                    path: '/perfil',
+                    element: <Profile />,
                 },
                 /* {
                     path: '/produtos',

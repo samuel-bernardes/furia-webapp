@@ -5,10 +5,29 @@ export interface IUser {
     phone: string;
     email: string;
     document: string;
+    avatar?: string;
     isTemporary: boolean;
     address?: Address;
     interests?: Game[];
+    socials?: ISocial[],
     eventInterests?: EventInterest[];
+}
+
+export interface IBasicUser {
+    id: string;
+    name: string;
+    email: string;
+    socials?: ISocial[],
+    interests?: Game[];
+    eventInterests?: EventInterest[];
+}
+
+export interface ISocial {
+    id: string,
+    platform: string
+    url: string
+    userId: string
+    username: string
 }
 
 export interface Address {
@@ -17,7 +36,6 @@ export interface Address {
     city: string;
     state: string;
     zipCode: string;
-    country: string;
 }
 
 export interface Game {
@@ -27,7 +45,7 @@ export interface Game {
 export interface EventInterest {
     eventName: string;
     date?: string;
-    location: string;
+    location?: string;
 }
 
 export interface ICompleteUserDTO {

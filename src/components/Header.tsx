@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Dialog, DialogPanel } from '@headlessui/react'
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, XMarkIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
 import { logoBlack } from '../assets'
 import { useNavigate } from 'react-router'
+import { useUserContext } from '../context/user/UserContext'
 
 const navigation = [
     { name: 'Quiz', href: 'quiz' },
@@ -13,10 +14,19 @@ const navigation = [
 function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const navigate = useNavigate();
 
+    const { user, logout, loading } = useUserContext();
+
+    const handleLogout = () => {
+        logout();
+        setIsProfileMenuOpen(false);
+        navigate('/');
+    };
+
     return (
-        <header className="bg-slate-100">
+        <header className="bg-slate-100 relative">
             <nav aria-label="Global" className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8">
                 <div className="flex flex-1">
                     <div className="hidden lg:flex lg:gap-x-12">
@@ -51,20 +61,67 @@ function Header() {
                     />
                 </div>
                 <div className="hidden lg:flex flex-1 justify-end">
-                    <button
-                        onClick={() => navigate("/login")}
-                        onMouseEnter={() => setIsHovered(true)}
-                        onMouseLeave={() => setIsHovered(false)}
-                        className="group relative flex items-center justify-center overflow-hidden rounded-md bg-yellow-500 p-3 min-w-40 shadow-sm transition-all hover:bg-yellow-400 hover:shadow-md"
-                    >
-                        <span className="relative text-md font-semibold">
-                            Entrar
-                            <span
-                                className={`absolute left-0 block h-0.5 bg-gray-900 transition-all duration-300 ${isHovered ? 'w-full' : 'w-0'}`}
-                                style={{ bottom: '-2px' }}
-                            />
-                        </span>
-                    </button>
+                    {loading ? (
+                        <div className="flex items-center gap-2">
+                            <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse"></div>
+                        </div>
+                    ) : user ? (
+                        <div className="relative">
+                            <button
+                                className="flex items-center gap-2 cursor-pointer"
+                                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-semibold text-gray-900">
+                                        Olá, {user?.name?.split(' ')[0]}
+                                    </span>
+                                    <div className="h-8 w-8 rounded-full bg-yellow-500 flex items-center justify-center text-sm font-semibold text-gray-900">
+                                        {user.name?.charAt(0).toUpperCase()}
+                                    </div>
+                                    <ChevronDownIcon
+                                        className={`h-4 w-4 text-gray-900 transition-transform ${isProfileMenuOpen ? 'transform rotate-180' : ''}`}
+                                    />
+                                </div>
+                            </button>
+
+                            {isProfileMenuOpen && (
+                                <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                                    <div className="py-1">
+                                        <button
+                                            onClick={() => {
+                                                navigate("/perfil");
+                                                setIsProfileMenuOpen(false);
+                                            }}
+                                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                        >
+                                            Perfil
+                                        </button>
+                                        <button
+                                            onClick={handleLogout}
+                                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                        >
+                                            Sair
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => navigate("/login")}
+                            onMouseEnter={() => setIsHovered(true)}
+                            onMouseLeave={() => setIsHovered(false)}
+                            className="group relative flex items-center justify-center overflow-hidden rounded-md bg-yellow-500 p-3 min-w-40 shadow-sm transition-all hover:bg-yellow-400 hover:shadow-md"
+                        >
+                            <span className="relative text-md font-semibold">
+                                Entrar
+                                <span
+                                    className={`absolute left-0 block h-0.5 bg-gray-900 transition-all duration-300 ${isHovered ? 'w-full' : 'w-0'}`}
+                                    style={{ bottom: '-2px' }}
+                                />
+                            </span>
+                        </button>
+                    )}
                 </div>
             </nav>
             <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
@@ -107,17 +164,50 @@ function Header() {
                                 {item.name}
                             </span>
                         ))}
-                        <button
-                            onClick={() => {
-                                navigate("/login");
-                                setMobileMenuOpen(false);
-                            }}
-                            className="-mx-3 w-58 rounded-lg bg-yellow-500 px-3 py-3 text-base/7 font-semibold text-gray-900 text-center hover:bg-yellow-400"
-                        >
-                            <span className='text-md font-semibold'>
-                                Entrar
-                            </span>
-                        </button>
+                        {loading ? (
+                            <div className="-mx-3 flex items-center gap-3 rounded-lg px-3 py-3">
+                                <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse"></div>
+                                <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+                            </div>
+                        ) : user ? (
+                            <>
+                                <div
+                                    className="-mx-3 flex items-center gap-3 rounded-lg px-3 py-3 hover:bg-gray-50 cursor-pointer"
+                                    onClick={() => {
+                                        navigate("/perfil");
+                                        setMobileMenuOpen(false);
+                                    }}
+                                >
+                                    <div className="h-8 w-8 rounded-full bg-yellow-500 flex items-center justify-center text-sm font-semibold text-gray-900">
+                                        {user.name?.charAt(0).toUpperCase()}
+                                    </div>
+                                    <span className="text-base/7 font-semibold text-gray-900">
+                                        Perfil
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        handleLogout();
+                                        setMobileMenuOpen(false);
+                                    }}
+                                    className="-mx-3 w-full text-left rounded-lg px-3 py-3 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
+                                >
+                                    Sair
+                                </button>
+                            </>
+                        ) : (
+                            <button
+                                onClick={() => {
+                                    navigate("/login");
+                                    setMobileMenuOpen(false);
+                                }}
+                                className="-mx-3 w-58 rounded-lg bg-yellow-500 px-3 py-3 text-base/7 font-semibold text-gray-900 text-center hover:bg-yellow-400"
+                            >
+                                <span className='text-md font-semibold'>
+                                    Entrar
+                                </span>
+                            </button>
+                        )}
                     </div>
                 </DialogPanel>
             </Dialog>

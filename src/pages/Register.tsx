@@ -1,6 +1,12 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { PhotoIcon } from "@heroicons/react/24/outline";
 import { brazilianStates } from '../mocks/brazilianStates';
+import useDoRequest from '../hooks/useDoRequest';
+import { maskCEP, maskCPF, maskPhone } from '../utils/Mask';
+import { ICompleteUserDTO } from '../services/endpoints/users/IUsers.interface';
+import { useUserContext } from '../context/user/UserContext';
+import { useNavigate } from 'react-router';
+
 function Register() {
     // Estado do formulário
     const [formData, setFormData] = useState({
@@ -17,58 +23,86 @@ function Register() {
         zipCode: '',
         interests: [],
         events: [],
-        document: null,
+        document: null as string | null,
         terms: false
     });
 
     const [errors, setErrors] = useState<any>({});
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [submitSuccess, setSubmitSuccess] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
 
-    // Máscaras
-    const applyMask = (value: string, mask: string) => {
-        let maskedValue = '';
-        let valueIndex = 0;
+    const CompleteRegistration = useDoRequest((api) => api.UsersRequest.completeRegistration);
 
-        for (let i = 0; i < mask.length; i++) {
-            if (valueIndex >= value.length) break;
+    const navigate = useNavigate();
 
-            if (mask[i] === '9') {
-                // Apenas números
-                if (/[0-9]/.test(value[valueIndex])) {
-                    maskedValue += value[valueIndex++];
-                }
-            } else if (mask[i] === 'A') {
-                // Apenas letras
-                if (/[a-zA-Z]/.test(value[valueIndex])) {
-                    maskedValue += value[valueIndex++];
-                }
-            } else {
-                // Caractere fixo da máscara
-                maskedValue += mask[i];
-                if (value[valueIndex] === mask[i]) {
-                    valueIndex++;
-                }
-            }
+    const { updateUser } = useUserContext();
+
+    async function handleCompleteRegistration() {
+        const registerData: ICompleteUserDTO = {
+            address: {
+                city: formData.city,
+                number: formData.number,
+                state: formData.state,
+                street: formData.street + " " + formData.neighborhood,
+                zipCode: formData.zipCode
+            },
+            cpf: formData.cpf,
+            document: formData.document || "",
+            email: formData.email,
+            name: formData.fullName,
+            phone: formData.phone,
+            eventInterests: formData.events.map((event) => {
+                return (
+                    {
+                        eventName: event
+                    }
+                )
+            }),
+            interests: formData.interests
         }
 
-        return maskedValue;
-    };
+        const response = await CompleteRegistration.doRequest(registerData);
 
-    const maskCPF = (value: string) => {
-        return applyMask(value, '999.999.999-99');
-    };
+        if (response.data) {
+            //@ts-ignore
+            updateUser(response.data.data);
+            return navigate("/");
+        }
+    }
 
-    const maskPhone = (value: string) => {
-        if (value.length <= 14) {
-            return applyMask(value, '(99) 9999-9999');
-        } else {
-            return applyMask(value, '(99) 99999-9999');
+    const handleFileChange = async (file: File) => {
+        if (!file) return;
+
+        // Check file type and size
+        const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+        const maxSize = 10 * 1024 * 1024; // 10MB
+
+        if (!validTypes.includes(file.type)) {
+            setErrors({ ...errors, document: 'Tipo de arquivo inválido. Use JPG, PNG ou PDF.' });
+            return;
+        }
+
+        if (file.size > maxSize) {
+            setErrors({ ...errors, document: 'Arquivo muito grande. Tamanho máximo: 10MB.' });
+            return;
+        }
+
+        try {
+            const base64String = await convertToBase64(file);
+            setFormData(prev => ({ ...prev, document: base64String }));
+            setErrors({ ...errors, document: undefined });
+        } catch (error) {
+            console.error('Error converting file:', error);
+            setErrors({ ...errors, document: 'Erro ao processar o arquivo.' });
         }
     };
 
-    const maskCEP = (value: string) => {
-        return applyMask(value, '99999-999');
+    const convertToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = error => reject(error);
+        });
     };
 
     // Manipuladores de eventos
@@ -91,7 +125,7 @@ function Register() {
             ...prev,
             [name]: type === 'checkbox' ? checked :
                 //@ts-ignore
-                type === 'file' ? files[0] :
+                type === 'file' ? (files && files[0] ? handleFileChange(files[0]) : null) :
                     processedValue
         }));
     };
@@ -109,6 +143,34 @@ function Register() {
             }
         });
     };
+
+    // Drag and drop handlers
+    const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    }, []);
+
+    const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    }, []);
+
+    const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+    }, []);
+
+    const handleDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            await handleFileChange(e.dataTransfer.files[0]);
+        }
+    }, []);
 
     // Validações
     const validateForm = () => {
@@ -140,37 +202,12 @@ function Register() {
             return;
         }
 
-        setIsSubmitting(true);
-
         try {
-            // Simular envio para API
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
-            console.log('Dados enviados:', formData);
-            setSubmitSuccess(true);
+            await handleCompleteRegistration();
         } catch (error) {
             console.error('Erro ao enviar:', error);
-        } finally {
-            setIsSubmitting(false);
         }
     };
-
-    if (submitSuccess) {
-        return (
-            <div className="min-h-screen bg-neutral-950 py-12 flex items-center justify-center">
-                <div className="bg-neutral-950/50 p-8 rounded-lg border border-yellow-400/20 text-center max-w-md">
-                    <h2 className="text-yellow-500 text-2xl font-bold mb-4">CADASTRO CONCLUÍDO!</h2>
-                    <p className="text-white mb-6">Seu cadastro foi realizado com sucesso. Bem-vindo à FURIA!</p>
-                    <button
-                        onClick={() => setSubmitSuccess(false)}
-                        className="px-6 py-2 text-sm font-bold text-gray-900 bg-yellow-500 rounded-md hover:bg-yellow-500/90"
-                    >
-                        VOLTAR
-                    </button>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen bg-neutral-950 py-12">
@@ -443,12 +480,17 @@ function Register() {
                                         Upload de Documento (RG ou CNH) *
                                         <span className="block text-xs text-gray-400 mt-1">O nome do arquivo deve conter seu nome completo</span>
                                     </label>
-                                    <div className={`mt-1 flex justify-center px-6 py-8 border-2 ${errors.document ? 'border-red-500' : 'border-dashed border-yellow-500/30'} rounded-md bg-white/5`}>
+                                    <div
+                                        onDragEnter={handleDragEnter}
+                                        onDragLeave={handleDragLeave}
+                                        onDragOver={handleDragOver}
+                                        onDrop={handleDrop}
+                                        className={`mt-1 flex justify-center px-6 py-8 border-2 ${isDragging ? 'border-yellow-500 bg-white/10' : errors.document ? 'border-red-500' : 'border-dashed border-yellow-500/30'} rounded-md bg-white/5 transition-colors duration-200`}
+                                    >
                                         <div className="space-y-1 text-center">
                                             {formData.document ? (
                                                 <>
-                                                    {/* @ts-ignore */}
-                                                    <p className="text-white">{formData.document.name}</p>
+                                                    <p className="text-white">Documento anexado com sucesso!</p>
                                                     <button
                                                         type="button"
                                                         onClick={() => setFormData(prev => ({ ...prev, document: null }))}
@@ -471,7 +513,7 @@ function Register() {
                                                                 name="document"
                                                                 type="file"
                                                                 accept=".pdf,.jpg,.jpeg,.png"
-                                                                onChange={handleChange}
+                                                                onChange={(e) => e.target.files && e.target.files[0] && handleFileChange(e.target.files[0])}
                                                                 className="sr-only"
                                                             />
                                                         </label>
@@ -480,6 +522,9 @@ function Register() {
                                                     <p className="text-xs text-gray-400">
                                                         PNG, JPG, PDF até 10MB
                                                     </p>
+                                                    {isDragging && (
+                                                        <p className="text-xs text-yellow-500 mt-2">Solte o arquivo para enviar</p>
+                                                    )}
                                                 </>
                                             )}
                                         </div>
@@ -519,10 +564,10 @@ function Register() {
                             </button>
                             <button
                                 type="submit"
-                                disabled={isSubmitting}
+                                disabled={CompleteRegistration.loading}
                                 className="px-6 py-2 text-sm font-bold text-gray-900 bg-yellow-500 rounded-md hover:bg-yellow-500/90 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 disabled:opacity-70 disabled:cursor-not-allowed"
                             >
-                                {isSubmitting ? 'ENVIANDO...' : 'COMPLETAR CADASTRO'}
+                                {CompleteRegistration.loading ? 'ENVIANDO...' : 'COMPLETAR CADASTRO'}
                             </button>
                         </div>
                     </div>

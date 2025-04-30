@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
-import { useUserContext } from "../context/user/UserContext";
-import UsersRequest from "../services/endpoints/users/Users.request";
+import { useUserContext } from "../context/user/UserContext"; // Ajuste o caminho
+
 function AuthCallback() {
     const navigate = useNavigate();
-    const { login } = useUserContext();
+    const { login } = useUserContext(); // Adicione esta linha
 
     useEffect(() => {
         const run = async () => {
@@ -16,7 +16,8 @@ function AuthCallback() {
                 navigate("/login");
                 return;
             }
-            sessionStorage.setItem("token", token);
+            // Aguarda a conclusão do login
+            await login(token);
 
             if (temporary === "true") {
                 navigate("/cadastro");
@@ -26,11 +27,13 @@ function AuthCallback() {
         };
 
         run();
-    }, [login, navigate]);
+    }, [navigate, login]);
 
     return (
-        <div className="text-white p-4">
-            Processando login...
+        <div>
+            <main>
+                <svg className="mr-3 size-5 animate-spin ..." viewBox="0 0 48 48" />
+            </main>
         </div>
     );
 }

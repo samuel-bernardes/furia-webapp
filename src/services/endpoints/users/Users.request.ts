@@ -1,10 +1,14 @@
 import RestApi, { IResponse } from "../../ApiBase";
-import { ICompleteUserDTO, IUpdateUserDTO, IUser } from "./IUsers.interface";
+import { IBasicUser, ICompleteUserDTO, IUpdateUserDTO, IUser } from "./IUsers.interface";
 
 export default class UsersRequest {
     // Buscar dados do usuário autenticado
-    public static getLoggedUser(): Promise<IResponse<IUser>> {
+    public static getLoggedUser(): Promise<IResponse<IBasicUser>> {
         return RestApi.httpGet("/users");
+    }
+
+    public static getUserDetails(id: string): Promise<IResponse<IUser>> {
+        return RestApi.httpGet(`/users/${id}`);
     }
 
     // Completar cadastro do usuário temporário
