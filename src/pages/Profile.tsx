@@ -7,11 +7,13 @@ import {
     faYoutube,
     faSteam
 } from "@fortawesome/free-brands-svg-icons";
-import { faGlobe, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faEdit, faGlobe, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import useDoRequest from '../hooks/useDoRequest';
 import { useEffect, useState } from 'react';
 import { IUser } from '../services/endpoints/users/IUsers.interface';
 import { useUserContext } from '../context/user/UserContext';
+import { useNavigate } from 'react-router';
+import { EditProfileModal } from '../components';
 
 // Mapeamento de ícones para redes sociais
 const platformIcons: { [key: string]: any } = {
@@ -25,9 +27,18 @@ const platformIcons: { [key: string]: any } = {
 };
 
 export default function ProfilePage() {
+
+    const navigate = useNavigate();
+
     const GetUserDetails = useDoRequest((api) => api.UsersRequest.getUserDetails);
+    const UpdateUser = useDoRequest((api) => api.UsersRequest.updateUser);
+    const DeleteUser = useDoRequest((api) => api.UsersRequest.deleteUser);
+
     const { user } = useUserContext();
     const [userDetails, setUserDetails] = useState<IUser | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editData, setEditData] = useState<IUser | null>(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     async function getUserDetails() {
         if (!user) return;
@@ -49,6 +60,34 @@ export default function ProfilePage() {
         console.log(`Conectando ${platform}...`);
         // Exemplo: abrir popup de autenticação ou modal de conexão
         // Você pode implementar isso de acordo com sua API
+    };
+
+    const handleEdit = () => {
+        setEditData({ ...userDetails });
+        setIsEditModalOpen(true);
+    };
+
+    const handleSave = async (updatedData: UserData) => {
+        try {
+            const response = await UpdateUser.doRequest(updatedData);
+            if (response.data) {
+                setUserDetails(response.data);
+                setIsEditModalOpen(false);
+            }
+        } catch (error) {
+            console.error("Failed to update user:", error);
+        } finally {
+        }
+    };
+
+    const handleDelete = async () => {
+        try {
+            await DeleteUser.doRequest("");
+            // Redirecionar para página inicial ou fazer logout
+            navigate("/");
+        } catch (error) {
+            console.error("Failed to delete user:", error);
+        }
     };
 
     useEffect(() => {
@@ -136,19 +175,38 @@ export default function ProfilePage() {
 
             <div className="max-w-4xl mx-auto relative">
                 {/* Cabeçalho do Perfil */}
-                <div className="flex flex-col items-center md:flex-row gap-8 mb-8">
+                <div className="flex flex-col items-center md:flex-row gap-8 mb-8 relative">
                     <img
-                        src={userDetails.avatar || "https://pbs.twimg.com/media/Go25pUVWkAA0Q_N.jpg"}
+                        src={userDetails.avatar}
                         alt={userDetails.name}
                         className="w-42 h-42 rounded-full object-cover border-2 border-yellow-500 shadow-lg"
                     />
-                    <div>
-                        <h1 className="text-4xl font-bold mb-2 text-white">{userDetails.name}</h1>
-                        <p className="text-gray-300 mb-1">{userDetails.email}</p>
-                        {userDetails.phone && <p className="text-gray-300">{userDetails.phone}</p>}
+                    <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h1 className="text-4xl font-bold mb-2 text-white">{userDetails.name}</h1>
+                                <p className="text-gray-300 mb-1">{userDetails.email}</p>
+                                {userDetails.phone && <p className="text-gray-300">{userDetails.phone}</p>}
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleEdit}
+                                    className="p-2 text-yellow-500 hover:text-yellow-300 hover:bg-yellow-500/10 rounded-full transition-colors"
+                                    title="Editar perfil"
+                                >
+                                    <FontAwesomeIcon icon={faEdit} />
+                                </button>
+                                <button
+                                    onClick={() => setShowDeleteModal(true)}
+                                    className="p-2 text-red-500 hover:text-red-300 hover:bg-red-500/10 rounded-full transition-colors"
+                                    title="Excluir conta"
+                                >
+                                    <FontAwesomeIcon icon={faTrash} />
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
                 {/* Grid de Informações */}
                 <div className="grid md:grid-cols-2 gap-6 mb-12">
                     {/* Coluna Esquerda - Dados Pessoais */}
@@ -156,7 +214,7 @@ export default function ProfilePage() {
                         <h2 className="text-xl font-semibold mb-4 text-yellow-400">Dados Pessoais</h2>
                         <dl className="space-y-3">
                             <div>
-                                <dt className="text-gray-400">CPF/CNPJ</dt>
+                                <dt className="text-gray-400">CPF</dt>
                                 <dd className="text-gray-200">{userDetails.cpf || 'Não informado'}</dd>
                             </div>
                             {userDetails.address ? (
@@ -188,7 +246,7 @@ export default function ProfilePage() {
                                             key={index}
                                             className="px-3 py-1 bg-yellow-500/20 text-yellow-50 rounded-full text-sm border border-yellow-500"
                                         >
-                                            {game.name}
+                                            {game}
                                         </span>
                                     ))
                                 ) : (
@@ -205,7 +263,7 @@ export default function ProfilePage() {
                                             key={index}
                                             className="px-3 py-1 bg-indigo-500/20 text-indigo-50 rounded-full text-sm border border-indigo-500"
                                         >
-                                            {event.eventName}
+                                            {event}
                                         </span>
                                     ))
                                 ) : (
@@ -281,6 +339,15 @@ export default function ProfilePage() {
                     </div>
                 </div>
             </div>
+            {isEditModalOpen && (
+                <EditProfileModal
+                    isOpen={isEditModalOpen}
+                    onClose={() => setIsEditModalOpen(false)}
+                    userData={userDetails}
+                    onSave={handleSave}
+                    isLoading={UpdateUser.loading}
+                />
+            )}
         </div>
     );
 }

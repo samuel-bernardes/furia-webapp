@@ -57,7 +57,7 @@ function Header() {
                         alt="logo-furia"
                         onClick={() => navigate("/")}
                         src={logoBlack}
-                        className="h-12 w-auto transition hover:scale-105"
+                        className="h-12 w-auto transition hover:scale-110 hover:rotate-6"
                     />
                 </div>
                 <div className="hidden lg:flex flex-1 justify-end">

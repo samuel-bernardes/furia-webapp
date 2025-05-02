@@ -9,7 +9,7 @@ interface UserContextType {
     loading: boolean;
     login: (token: string) => void; // <-- recebe apenas o token
     logout: () => void;
-    updateUser: (updatedUser: Partial<IBasicUser>) => void;
+    updateUser: () => void;
 }
 const UserContext = createContext<UserContextType | null>(null);
 
@@ -61,17 +61,10 @@ export function UserContextProvider({ children }: { children: ReactNode }) {
         setUser(null);
     };
 
-    const updateUser = (updatedUser: Partial<IBasicUser>) => {
-        if (!user) return;
 
-        const newUserData = {
-            ...user,
-            ...updatedUser
-        };
-
-        sessionStorage.setItem('user', JSON.stringify(newUserData));
-        setUser(newUserData);
-    };
+    const updateUser = useCallback(async () => {
+        return await getLoggedUser();
+    }, [getLoggedUser]);
 
     return (
         <UserContext.Provider value={{ user, loading: GetLoggedUser.loading, login, logout, updateUser }}>

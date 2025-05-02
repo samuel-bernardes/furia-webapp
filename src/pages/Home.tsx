@@ -5,7 +5,7 @@ function Home() {
     return (
         <div>
             <main>
-                <div className="relative isolate overflow-hidde">
+                <div className="relative isolate overflow-hidden">
                     <svg
                         aria-hidden="true"
                         className="absolute inset-0 -z-10 size-full [mask-image:radial-gradient(100%_100%_at_top_right,white,transparent)] stroke-yellow-500/10"

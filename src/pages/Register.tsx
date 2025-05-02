@@ -23,6 +23,7 @@ function Register() {
         zipCode: '',
         interests: [],
         events: [],
+        avatar: null as string | null, // Novo campo
         document: null as string | null,
         terms: false
     });
@@ -50,22 +51,18 @@ function Register() {
             email: formData.email,
             name: formData.fullName,
             phone: formData.phone,
-            eventInterests: formData.events.map((event) => {
-                return (
-                    {
-                        eventName: event
-                    }
-                )
-            }),
-            interests: formData.interests
+            eventInterests: formData.events,
+            interests: formData.interests,
+            avatar: formData.avatar || undefined,
         }
 
         const response = await CompleteRegistration.doRequest(registerData);
 
         if (response.data) {
-            //@ts-ignore
-            updateUser(response.data.data);
-            return navigate("/");
+            await updateUser(); // Chama a função atualizada
+
+            navigate("/");
+
         }
     }
 
@@ -172,9 +169,51 @@ function Register() {
         }
     }, []);
 
+    const handleAvatarChange = async (file: File) => {
+        const validTypes = ['image/jpeg', 'image/png'];
+        const maxSize = 2 * 1024 * 1024; // 2MB
+
+        if (!validTypes.includes(file.type)) {
+            setErrors({ ...errors, avatar: 'Tipo de arquivo inválido. Use JPG ou PNG.' });
+            return;
+        }
+
+        if (file.size > maxSize) {
+            setErrors({ ...errors, avatar: 'Arquivo muito grande. Tamanho máximo: 2MB.' });
+            return;
+        }
+
+        try {
+            const base64String = await convertToBase64(file);
+            setFormData(prev => ({ ...prev, avatar: base64String }));
+            setErrors({ ...errors, avatar: undefined });
+        } catch (error) {
+            console.error('Error converting avatar:', error);
+            setErrors({ ...errors, avatar: 'Erro ao processar a imagem.' });
+        }
+    };
+
     // Validações
     const validateForm = () => {
         const newErrors: any = {};
+        // Verificar se o documento é uma imagem ou PDF válido
+        if (formData.document) {
+            const validTypes = ['image/jpeg', 'image/png'];
+            const mimeType = formData.document.split(';')[0].split(':')[1];
+
+            if (!validTypes.includes(mimeType)) {
+                newErrors.document = 'Tipo de arquivo inválido. Use JPG ou PNG.';
+            }
+        }
+
+        if (formData.avatar) {
+            const validTypes = ['image/jpeg', 'image/png'];
+            const mimeType = formData.avatar.split(';')[0].split(':')[1];
+
+            if (!validTypes.includes(mimeType)) {
+                newErrors.avatar = 'Formato de imagem inválido';
+            }
+        }
 
         // Validação de campos obrigatórios
         if (!formData.fullName.trim()) newErrors.fullName = 'Nome completo é obrigatório';
@@ -204,10 +243,30 @@ function Register() {
 
         try {
             await handleCompleteRegistration();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Erro ao enviar:', error);
+
+            // Tratamento específico para erros de validação de documento
+            if (error.response?.data?.message?.includes('Documento inválido')) {
+                setErrors({
+                    ...errors,
+                    document: error.response.data.message
+                });
+            } else {
+                // Feedback genérico para outros erros
+                alert('Erro ao completar cadastro: ' + (error.response?.data?.message || error.message));
+            }
         }
     };
+
+    const eventOptions = [
+        { value: 'Eventos Online (lives, entrevistas)', label: 'Eventos Online (lives, entrevistas)' },
+        { value: 'Eventos Presenciais (lan houses, arenas)', label: 'Eventos Presenciais (lan houses, arenas)' },
+        { value: 'Campeonatos eSports', label: 'Campeonatos eSports' },
+        { value: 'Meetups com jogadores e streamers', label: 'Meetups com jogadores e streamers' },
+        { value: 'Tour em gaming houses / sede da FURIA', label: 'Tour em gaming houses / sede da FURIA' },
+        { value: 'Conteúdo exclusivo (bastidores, vídeos especiais)', label: 'Conteúdo exclusivo (bastidores, vídeos especiais)' },
+    ];
 
     return (
         <div className="min-h-screen bg-neutral-950 py-12">
@@ -417,7 +476,7 @@ function Register() {
                                 <p className="text-sm text-white mb-3">Selecione os esports que você acompanha:</p>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {['cs2', 'valorant', 'lol', 'r6', 'rocket-league', 'others'].map(game => (
+                                    {['Counter-Strike 2', 'Valorant', 'League of Legends', 'Rainbow Six', 'Rocket League', 'Furia FC', 'Outros'].map(game => (
                                         <div key={game} className="flex items-center">
                                             <input
                                                 id={game}
@@ -430,12 +489,13 @@ function Register() {
                                                 className="h-4 w-4 rounded border-yellow-400/20 text-yellow-500 focus:ring-yellow-500"
                                             />
                                             <label htmlFor={game} className="ml-3 text-sm text-white">
-                                                {game === 'cs2' && 'Counter-Strike 2'}
-                                                {game === 'valorant' && 'Valorant'}
-                                                {game === 'lol' && 'League of Legends'}
-                                                {game === 'r6' && 'Rainbow Six'}
-                                                {game === 'rocket-league' && 'Rocket League'}
-                                                {game === 'others' && 'Outros'}
+                                                {game === 'Counter-Strike 2' && 'Counter-Strike 2'}
+                                                {game === 'Valorant' && 'Valorant'}
+                                                {game === 'League of Legends' && 'League of Legends'}
+                                                {game === 'Rainbow Six' && 'Rainbow Six'}
+                                                {game === 'Rocket League' && 'Rocket League'}
+                                                {game === 'Furia FC' && 'Furia FC'}
+                                                {game === 'Outros' && 'Outros'}
                                             </label>
                                         </div>
                                     ))}
@@ -446,26 +506,70 @@ function Register() {
                                 <p className="text-sm text-white mb-3">Selecione os tipos de eventos que deseja receber informações:</p>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {['online', 'presencial', 'campeonatos', 'meetups'].map(event => (
-                                        <div key={event} className="flex items-center">
+                                    {eventOptions.map(({ value, label }) => (
+                                        <div key={value} className="flex items-start space-x-3">
                                             <input
-                                                id={event}
+                                                id={value}
                                                 name="events"
                                                 type="checkbox"
-                                                value={event}
+                                                value={value}
                                                 //@ts-ignore
-                                                checked={formData.events.includes(event)}
+                                                checked={formData.events.includes(value)}
                                                 onChange={handleCheckboxChange}
-                                                className="h-4 w-4 rounded border-yellow-400/20 text-yellow-500 focus:ring-yellow-500"
+                                                className="mt-1 h-4 w-4 rounded border-yellow-400/20 text-yellow-500 focus:ring-yellow-500"
                                             />
-                                            <label htmlFor={event} className="ml-3 text-sm text-white">
-                                                {event === 'online' && 'Eventos Online'}
-                                                {event === 'presencial' && 'Eventos Presenciais'}
-                                                {event === 'campeonatos' && 'Campeonatos'}
-                                                {event === 'meetups' && 'Meetups com jogadores'}
+                                            <label htmlFor={value} className="text-sm text-white leading-5">
+                                                {label}
                                             </label>
                                         </div>
                                     ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="border-b border-yellow-500/10 pb-8">
+                            <h2 className="text-xl font-bold text-yellow-500 mb-4">AVATAR</h2>
+
+                            <div className="flex items-center gap-8">
+                                {/* Preview do Avatar */}
+                                <div className="relative group">
+                                    <div className="w-24 h-24 rounded-full border-2 border-yellow-500/30 overflow-hidden">
+                                        {formData.avatar ? (
+                                            <img
+                                                src={formData.avatar}
+                                                alt="Preview do Avatar"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-yellow-500/10 flex items-center justify-center">
+                                                <PhotoIcon className="w-8 h-8 text-yellow-500/50" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full flex items-center justify-center">
+                                        <label className="cursor-pointer text-yellow-500 text-sm font-medium">
+                                            Alterar
+                                            <input
+                                                type="file"
+                                                accept=".jpg,.jpeg,.png"
+                                                onChange={(e) => e.target.files?.[0] && handleAvatarChange(e.target.files[0])}
+                                                className="sr-only"
+                                            />
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {/* Instruções */}
+                                <div className="flex-1">
+                                    <p className="text-sm text-white mb-2">
+                                        Escolha uma foto para o seu perfil Furioso
+                                    </p>
+                                    <div className="text-xs text-gray-400 space-y-1">
+                                        <p>• Formatos aceitos: JPG, PNG</p>
+                                        <p>• Tamanho máximo: 2MB</p>
+                                        <p>• Dimensões recomendadas: 400x400px</p>
+                                    </div>
+                                    {errors.avatar && <p className="mt-2 text-sm text-red-500">{errors.avatar}</p>}
                                 </div>
                             </div>
                         </div>
@@ -478,7 +582,12 @@ function Register() {
                                 <div>
                                     <label htmlFor="document" className="block text-sm font-medium text-white mb-2">
                                         Upload de Documento (RG ou CNH) *
-                                        <span className="block text-xs text-gray-400 mt-1">O nome do arquivo deve conter seu nome completo</span>
+                                        <span className="block text-xs text-gray-400 mt-1">
+                                            Envie a foto ou scan do seu documento oficial
+                                        </span>
+                                        <span className="block text-xs text-gray-400">
+                                            O documento deve estar legível e conter seu CPF e nome completo
+                                        </span>
                                     </label>
                                     <div
                                         onDragEnter={handleDragEnter}
@@ -512,7 +621,7 @@ function Register() {
                                                                 id="document-upload"
                                                                 name="document"
                                                                 type="file"
-                                                                accept=".pdf,.jpg,.jpeg,.png"
+                                                                accept=".jpg,.jpeg,.png"
                                                                 onChange={(e) => e.target.files && e.target.files[0] && handleFileChange(e.target.files[0])}
                                                                 className="sr-only"
                                                             />
@@ -520,7 +629,7 @@ function Register() {
                                                         <p className="pl-1">ou arraste até aqui</p>
                                                     </div>
                                                     <p className="text-xs text-gray-400">
-                                                        PNG, JPG, PDF até 10MB
+                                                        PNG ou JPG até 5MB
                                                     </p>
                                                     {isDragging && (
                                                         <p className="text-xs text-yellow-500 mt-2">Solte o arquivo para enviar</p>
@@ -565,9 +674,20 @@ function Register() {
                             <button
                                 type="submit"
                                 disabled={CompleteRegistration.loading}
-                                className="px-6 py-2 text-sm font-bold text-gray-900 bg-yellow-500 rounded-md hover:bg-yellow-500/90 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                className={`px-6 py-2 text-sm font-bold text-gray-900 bg-yellow-500 rounded-md hover:bg-yellow-500/90 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 ${CompleteRegistration.loading ? 'opacity-70 cursor-not-allowed' : ''
+                                    }`}
                             >
-                                {CompleteRegistration.loading ? 'ENVIANDO...' : 'COMPLETAR CADASTRO'}
+                                {CompleteRegistration.loading ? (
+                                    <span className="flex items-center justify-center">
+                                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        VALIDANDO DOCUMENTO...
+                                    </span>
+                                ) : (
+                                    'COMPLETAR CADASTRO'
+                                )}
                             </button>
                         </div>
                     </div>

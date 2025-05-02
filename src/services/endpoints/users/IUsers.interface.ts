@@ -7,10 +7,10 @@ export interface IUser {
     document: string;
     avatar?: string;
     isTemporary: boolean;
-    address?: Address;
-    interests?: Game[];
-    socials?: ISocial[],
-    eventInterests?: EventInterest[];
+    address: Address;
+    interests: string[];
+    socials: ISocial[],
+    eventInterests: string[];
 }
 
 export interface IBasicUser {
@@ -18,8 +18,8 @@ export interface IBasicUser {
     name: string;
     email: string;
     socials?: ISocial[],
-    interests?: Game[];
-    eventInterests?: EventInterest[];
+    interests?: string[];
+    eventInterests?: string[];
 }
 
 export interface ISocial {
@@ -38,25 +38,16 @@ export interface Address {
     zipCode: string;
 }
 
-export interface Game {
-    name: string;
-}
-
-export interface EventInterest {
-    eventName: string;
-    date?: string;
-    location?: string;
-}
-
 export interface ICompleteUserDTO {
     name: string;
     cpf: string;
     phone: string;
     email: string;
+    avatar?: string;
     document: string;
     address: Address;
     interests?: string[];
-    eventInterests?: EventInterest[];
+    eventInterests?: string[];
 }
 
 export interface IUpdateUserDTO {
@@ -64,5 +55,5 @@ export interface IUpdateUserDTO {
     phone?: string;
     address?: Partial<Address>;
     interests?: string[];
-    eventInterests?: EventInterest[];
+    eventInterests?: string[];
 }
