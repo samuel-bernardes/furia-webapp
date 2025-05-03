@@ -7,9 +7,24 @@
   <link href="/src/styles.css" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="icon" type="image/jpg" href="/src/assets/logo-black.png" />
   <link
     href="https://fonts.googleapis.com/css2?family=Montaga&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap"
     rel="stylesheet">
+
+  <script src="https://unpkg.com/blip-chat-widget" type="text/javascript"></script>
+  <script>
+    (function () {
+      window.onload = function () {
+        new BlipChat()
+          .withAppKey('ZnVyaWFib3Q6ZGM2MzQ1NzMtNGFlYS00N2YyLThiMDAtMDZmYjkzNmU5ZWFi')
+          .withButton({ "color": "#010101", "icon": "https://blipmediastore.blip.ai/public-medias/Media_9dd9c8a8-69e5-46ca-8940-9c8ccb3a938f" })
+          .withCustomCommonUrl('https://samuel-bernardes-r2z1h.chat.blip.ai/')
+          .build();
+      }
+    })();
+  </script>
+
 
   <title>Furia</title>
 </head>

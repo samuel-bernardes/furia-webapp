@@ -7,13 +7,11 @@ import {
     faYoutube,
     faSteam
 } from "@fortawesome/free-brands-svg-icons";
-import { faEdit, faGlobe, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faGlobe, faPlus } from "@fortawesome/free-solid-svg-icons";
 import useDoRequest from '../hooks/useDoRequest';
 import { useEffect, useState } from 'react';
 import { IUser } from '../services/endpoints/users/IUsers.interface';
 import { useUserContext } from '../context/user/UserContext';
-import { useNavigate } from 'react-router';
-import { EditProfileModal } from '../components';
 
 // Mapeamento de ícones para redes sociais
 const platformIcons: { [key: string]: any } = {
@@ -26,19 +24,14 @@ const platformIcons: { [key: string]: any } = {
     'Website': faGlobe
 };
 
+const env = import.meta.env;
+
 export default function ProfilePage() {
 
-    const navigate = useNavigate();
-
     const GetUserDetails = useDoRequest((api) => api.UsersRequest.getUserDetails);
-    const UpdateUser = useDoRequest((api) => api.UsersRequest.updateUser);
-    const DeleteUser = useDoRequest((api) => api.UsersRequest.deleteUser);
-
     const { user } = useUserContext();
     const [userDetails, setUserDetails] = useState<IUser | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [editData, setEditData] = useState<IUser | null>(null);
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     async function getUserDetails() {
         if (!user) return;
@@ -56,38 +49,53 @@ export default function ProfilePage() {
 
     // Função para conectar rede social
     const handleConnectSocial = (platform: string) => {
-        // Aqui você implementaria a lógica para conectar a rede social
-        console.log(`Conectando ${platform}...`);
-        // Exemplo: abrir popup de autenticação ou modal de conexão
-        // Você pode implementar isso de acordo com sua API
-    };
+        // Obter o token JWT do usuário logado
+        const userToken = sessionStorage.getItem('token');// Ou de onde você armazena o token
 
-    const handleEdit = () => {
-        setEditData({ ...userDetails });
-        setIsEditModalOpen(true);
-    };
+        if (!userToken) {
+            return '#';
+        }
 
-    const handleSave = async (updatedData: UserData) => {
-        try {
-            const response = await UpdateUser.doRequest(updatedData);
-            if (response.data) {
-                setUserDetails(response.data);
-                setIsEditModalOpen(false);
+        // Configurações base para cada provedor
+        const providers = {
+            Twitch: {
+                authUrl: 'https://id.twitch.tv/oauth2/authorize',
+                clientId: env.VITE_TWITCH_CLIENT_ID,
+                redirectUri: 'http://localhost:3333/connection/twitch',
+                scopes: 'user:read:email'
+            },
+            Discord: {
+                authUrl: 'https://discord.com/oauth2/authorize',
+                clientId: env.VITE_DISCORD_CLIENT_ID, // Melhor usar env.VITE_DISCORD_CLIENT_ID
+                redirectUri: 'http://localhost:3333/connection/discord',
+                scopes: 'identify email openid'
             }
-        } catch (error) {
-            console.error("Failed to update user:", error);
-        } finally {
-        }
-    };
+        };
 
-    const handleDelete = async () => {
-        try {
-            await DeleteUser.doRequest("");
-            // Redirecionar para página inicial ou fazer logout
-            navigate("/");
-        } catch (error) {
-            console.error("Failed to delete user:", error);
+        // Verifica se a plataforma é suportada
+        //@ts-ignore
+        if (!providers[platform]) {
+            return '#';
         }
+
+        //@ts-ignore
+        const { authUrl, clientId, redirectUri, scopes } = providers[platform];
+
+        // Cria um state seguro contendo o token JWT e um nonce
+        const state = encodeURIComponent(JSON.stringify({
+            token: userToken,
+            nonce: Math.random().toString(36).substring(2, 15) +
+                Math.random().toString(36).substring(2, 15)
+        }));
+
+        // Gera a URL de autorização
+        return `${authUrl}?` +
+            `response_type=code&` +
+            `client_id=${clientId}&` +
+            `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+            `scope=${encodeURIComponent(scopes)}&` +
+            `state=${state}&` +
+            `force_verify=false`;
     };
 
     useEffect(() => {
@@ -187,22 +195,6 @@ export default function ProfilePage() {
                                 <h1 className="text-4xl font-bold mb-2 text-white">{userDetails.name}</h1>
                                 <p className="text-gray-300 mb-1">{userDetails.email}</p>
                                 {userDetails.phone && <p className="text-gray-300">{userDetails.phone}</p>}
-                            </div>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={handleEdit}
-                                    className="p-2 text-yellow-500 hover:text-yellow-300 hover:bg-yellow-500/10 rounded-full transition-colors"
-                                    title="Editar perfil"
-                                >
-                                    <FontAwesomeIcon icon={faEdit} />
-                                </button>
-                                <button
-                                    onClick={() => setShowDeleteModal(true)}
-                                    className="p-2 text-red-500 hover:text-red-300 hover:bg-red-500/10 rounded-full transition-colors"
-                                    title="Excluir conta"
-                                >
-                                    <FontAwesomeIcon icon={faTrash} />
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -320,9 +312,10 @@ export default function ProfilePage() {
                                 const isConnected = userDetails?.socials?.some(s => s.platform === platform);
 
                                 return isConnected ? null : (
-                                    <button
+                                    <a
                                         key={platform}
-                                        onClick={() => handleConnectSocial(platform)}
+                                        /* target="_blank" */
+                                        href={handleConnectSocial(platform)}
                                         className="flex items-center p-4 bg-gray-700/30 hover:bg-gray-700/50 rounded-lg transition-colors border border-gray-600/50 hover:border-yellow-500/30 group"
                                     >
                                         <FontAwesomeIcon
@@ -332,22 +325,13 @@ export default function ProfilePage() {
                                         <span className="text-gray-400 group-hover:text-gray-300 transition-colors">
                                             {platform}
                                         </span>
-                                    </button>
+                                    </a>
                                 );
                             })}
                         </div>
                     </div>
                 </div>
             </div>
-            {isEditModalOpen && (
-                <EditProfileModal
-                    isOpen={isEditModalOpen}
-                    onClose={() => setIsEditModalOpen(false)}
-                    userData={userDetails}
-                    onSave={handleSave}
-                    isLoading={UpdateUser.loading}
-                />
-            )}
         </div>
     );
 }

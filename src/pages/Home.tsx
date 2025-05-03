@@ -1,7 +1,11 @@
+import { useNavigate } from "react-router";
 import { logoBlack } from "../assets";
 import { Brands } from "../components";
 
 function Home() {
+
+    const navigate = useNavigate();
+
     return (
         <div>
             <main>
@@ -50,15 +54,14 @@ function Home() {
                                 className="h-24"
                             />
                             <div className="mt-24 sm:mt-32 lg:mt-16">
-                                <a href="#" className="inline-flex space-x-6">
-                                    <span className="rounded-full bg-yellow-200 px-3 py-1 text-sm/6 font-semibold text-gray-900 ring-1 ring-inset">
-                                        NOVIDADES
+                                <span className="inline-flex space-x-6">
+                                    <span className="rounded-full bg-yellow-200 px-3 py-1 text-sm/6 font-semibold text-gray-900 ring-1 ring-inset cursor-pointer" onClick={() => navigate("/clipes")}>
+                                        CLIPES
                                     </span>
-                                    <span className="inline-flex items-center space-x-2 text-sm/6 font-medium text-gray-200">
-                                        <span>Próximos Jogos</span>
-                                        {/* <ChevronRightIcon aria-hidden="true" className="size-5 text-yellow-700" /> */}
+                                    <span className="inline-flex items-center space-x-2 text-sm/6 font-medium text-gray-200 cursor-pointer" onClick={() => navigate("/sobre")}>
+                                        <span>Sobre nós</span>
                                     </span>
-                                </a>
+                                </span>
                             </div>
                             <h1 className="mt-10 text-5xl font-bold tracking-tight text-pretty text-white sm:text-7xl">
                                 A FURIA do Brasil

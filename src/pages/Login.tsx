@@ -14,6 +14,18 @@ function Login() {
 
     const discordRedirectUrl = `${env.VITE_DISCORD_REDIRECT_URL}`;
 
+    const generateTwitchAuthUrl = () => {
+        const clientId = env.VITE_TWITCH_CLIENT_ID;
+        const redirectUri = encodeURIComponent("http://localhost:3333/auth/twitch/redirect");
+        const scopes = encodeURIComponent("user:read:email"); // Escopos básicos para login
+
+        // Gera um state randomico para proteção contra CSRF
+        const state = Math.random().toString(36).substring(2, 15) +
+            Math.random().toString(36).substring(2, 15);
+
+        return `https://id.twitch.tv/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scopes}&state=${state}&force_verify=false`;
+    };
+
     return (
         <div className="min-h-screen bg-neutral-950 bg-cover bg-center flex" style={{ backgroundImage: `url(${loginWallpaper})` }}>
             <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" />
@@ -49,7 +61,7 @@ function Login() {
                                 </a>
 
                                 <a
-                                    href="#"
+                                    href={generateTwitchAuthUrl()}
                                     className="flex w-full items-center justify-center gap-3 rounded-md p-3 text-sm font-semibold text-white shadow-xs transition-colors bg-[#9146FF] hover:bg-[#7d3be6]"
                                 >
                                     <FontAwesomeIcon icon={faTwitch} className="text-white text-sm font-semibold" />
