@@ -50,6 +50,7 @@ export default function ProfilePage() {
     const handleConnectSocial = (platform: string) => {
         // Obter o token JWT do usuário logado
         const userToken = sessionStorage.getItem('token');// Ou de onde você armazena o token
+        const apiUrl = `${env.VITE_API_URL}`;
 
         if (!userToken) {
             return '#';
@@ -60,13 +61,13 @@ export default function ProfilePage() {
             Twitch: {
                 authUrl: 'https://id.twitch.tv/oauth2/authorize',
                 clientId: env.VITE_TWITCH_CLIENT_ID,
-                redirectUri: 'http://localhost:3333/connection/twitch',
+                redirectUri: `${apiUrl}/connection/twitch`,
                 scopes: 'user:read:email'
             },
             Discord: {
                 authUrl: 'https://discord.com/oauth2/authorize',
                 clientId: env.VITE_DISCORD_CLIENT_ID, // Melhor usar env.VITE_DISCORD_CLIENT_ID
-                redirectUri: 'http://localhost:3333/connection/discord',
+                redirectUri: `${apiUrl}/connection/discord`,
                 scopes: 'identify email openid'
             }
         };

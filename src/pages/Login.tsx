@@ -13,10 +13,11 @@ function Login() {
     const navigate = useNavigate();
 
     const discordRedirectUrl = `${env.VITE_DISCORD_REDIRECT_URL}`;
+    const apiUrl = `${env.VITE_API_URL}`;
 
     const generateTwitchAuthUrl = () => {
         const clientId = env.VITE_TWITCH_CLIENT_ID;
-        const redirectUri = encodeURIComponent("http://localhost:3333/auth/twitch/redirect");
+        const redirectUri = encodeURIComponent(`${apiUrl}/auth/twitch/redirect`);
         const scopes = encodeURIComponent("user:read:email"); // Escopos básicos para login
 
         // Gera um state randomico para proteção contra CSRF
