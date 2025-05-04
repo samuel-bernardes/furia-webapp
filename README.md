@@ -53,6 +53,12 @@ npm install
 
 Configure as variáveis de ambiente (exemplo no arquivo .env.example)
 
+Execute o servidor localmente:
+
+```bash
+npm run dev
+```
+
 ## 🔐 Autenticação
 
 A autenticação é feita por OAuth2 com redirecionamento. O backend lida com o fluxo e retorna um token que é armazenado no front localmente (sessionStorage).
