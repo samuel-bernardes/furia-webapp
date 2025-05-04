@@ -7,12 +7,6 @@ export interface IResponse<T> {
     message?: string;
 }
 
-// export interface IResponseApiData<T> {
-//     data?: T;
-//     statusCode?: number | boolean;
-//     message?: string;
-// }
-
 export interface INonDataResponse {
     error: any;
     status?: number | boolean;

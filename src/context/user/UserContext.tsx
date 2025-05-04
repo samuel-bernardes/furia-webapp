@@ -3,7 +3,6 @@ import RestApi from '../../services/ApiBase';
 import useDoRequest from '../../hooks/useDoRequest';
 import { IBasicUser } from '../../services/endpoints/users/IUsers.interface';
 
-
 interface UserContextType {
     user: IBasicUser | null;
     loading: boolean;

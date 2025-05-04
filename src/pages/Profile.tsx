@@ -31,7 +31,6 @@ export default function ProfilePage() {
     const GetUserDetails = useDoRequest((api) => api.UsersRequest.getUserDetails);
     const { user } = useUserContext();
     const [userDetails, setUserDetails] = useState<IUser | null>(null);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     async function getUserDetails() {
         if (!user) return;
