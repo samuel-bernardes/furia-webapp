@@ -62,6 +62,7 @@ export function UserContextProvider({ children }: { children: ReactNode }) {
 
 
     const updateUser = useCallback(async () => {
+        RestApi.setAuthToken();
         return await getLoggedUser();
     }, [getLoggedUser]);
 
