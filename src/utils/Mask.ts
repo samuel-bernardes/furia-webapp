@@ -33,11 +33,7 @@ export const maskCPF = (value: string) => {
 };
 
 export const maskPhone = (value: string) => {
-    if (value.length <= 14) {
-        return applyMask(value, '(99) 9999-9999');
-    } else {
-        return applyMask(value, '(99) 99999-9999');
-    }
+    return applyMask(value, '(99) 9999-99999');
 };
 
 export const maskCEP = (value: string) => {

@@ -6,12 +6,13 @@ import {
     faXTwitter,
     faYoutube
 } from "@fortawesome/free-brands-svg-icons";
+import { useNavigate } from 'react-router';
 
 const navigation = {
     main: [
-        { name: 'Sobre', href: '#' },
-        { name: 'Clipes', href: '#' },
-        { name: 'Quiz', href: '#' },
+        { name: 'Sobre', href: '/sobre' },
+        { name: 'Clipes', href: '/clipes' },
+        { name: 'Quiz', href: '/quiz' },
     ],
     social: [
         {
@@ -43,19 +44,23 @@ const navigation = {
 }
 
 function Footer() {
+
+    const navigate = useNavigate();
+
     return (
         <footer className="bg-neutral-950">
             <div className="mx-auto max-w-7xl overflow-hidden px-6 py-20 sm:py-24 lg:px-8">
                 <nav aria-label="Footer" className="-mb-6 flex flex-wrap justify-center gap-x-12 gap-y-3 text-sm/6">
                     {navigation.main.map((item) => (
-                        <a
+                        <span
+                            className='cursor-pointer'
                             key={item.name}
-                            href={item.href}
+                            onClick={() => navigate(item.href)}
                         >
                             <span className="text-gray-400 hover:text-white transition-colors duration-200">
                                 {item.name}
                             </span>
-                        </a>
+                        </span>
                     ))}
                 </nav>
                 <div className="mt-16 flex justify-center gap-x-8">
